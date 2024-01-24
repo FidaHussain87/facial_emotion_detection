@@ -133,8 +133,9 @@
       const processedStream = document.getElementById("processedStream");
       let selectedModel = "";
       let stream;
-
-
+      var CNN_predictions = [];
+      var Chehra_predictions = [];
+      var Yollo_predictions = [];
 
       function handleRadioChange(groupName, selectedRadio) {
         const selectedValue = selectedRadio.value;
@@ -148,11 +149,9 @@
         if (selectedValue === "CNN") {
           console.log("CNN");
           selectedModel = "CNN";
-
         } else if (selectedValue === "Chehra") {
           console.log("Chehra");
           selectedModel = "Chehra";
-          
         } else if (selectedValue === "Yollo") {
           selectedModel = "Yollo";
           // Handle Yollo model setup here
@@ -180,8 +179,7 @@
           startSendingCNNFrames();
         } else if (selectedModel === "Chehra") {
           startSendingChehraFrames();
-        }
-        else if (selectedModel === "Yollo") {
+        } else if (selectedModel === "Yollo") {
           startSendingYolloFrames();
         }
         // startSendingFrames();
@@ -199,6 +197,25 @@
         cameraStream.srcObject = null;
         processedStream.src = ""; // Clear the processed image
       }
+      const get_chehra_predictions = async () => {
+        try {
+          const response = await fetch("/get_chehra_predictions");
+
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+
+          const data = await response.json();
+          /** here you can call the chart function and pass the data.predictions 
+          as a parameter to get updated chart everytime you run, till you stopCamera */
+          //for chehra the lables are:  labels = ["anger","fear","happiness","neutrality","sadness","surprise"]
+          if (data.predictions.length > 0) {
+            Chehra_predictions = data.predictions;
+          }
+        } catch (error) {
+          console.error("Error fetching predictions:", error);
+        }
+      };
 
       function startSendingChehraFrames() {
         const canvas = document.createElement("canvas");
@@ -207,7 +224,7 @@
         canvas.height = cameraStream.videoHeight;
 
         ctx.drawImage(cameraStream, 0, 0, canvas.width, canvas.height);
-
+        get_chehra_predictions();
         canvas.toBlob(
           (blob) => {
             const formData = new FormData();
@@ -223,15 +240,35 @@
                 processedStream.src = processedUrl;
 
                 // Recursively send and display processed frames
-                if(selectedModel === "Chehra"){
+                if (selectedModel === "Chehra") {
                   startSendingChehraFrames();
                 }
-               });
+              });
           },
           "image/jpeg",
           0.9
         );
       }
+
+      const get_CNN_predictions = async () => {
+        try {
+          const response = await fetch("/get_cnn_predictions");
+
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+
+          /** here you can call the chart function and pass the data.predictions 
+          as a parameter to get updated chart everytime you run, till you stopCamera */
+          //for CNN the lables are: lables = ['anger', 'contempt', 'disgust', 'fear', 'happiness', 'neutrality', 'sadness', 'surprise']
+          const data = await response.json();
+          if (data.predictions.length > 0) {
+            CNN_predictions = data.predictions;
+          }
+        } catch (error) {
+          console.error("Error fetching predictions:", error);
+        }
+      };
 
       function startSendingCNNFrames() {
         const canvas = document.createElement("canvas");
@@ -240,12 +277,13 @@
         canvas.height = cameraStream.videoHeight;
 
         ctx.drawImage(cameraStream, 0, 0, canvas.width, canvas.height);
+        // calling an api for getting prediction values:
+        get_CNN_predictions();
 
         canvas.toBlob(
           (blob) => {
             const formData = new FormData();
             formData.append("frame", blob);
-
             fetch("/process_CNN_frame", {
               method: "POST",
               body: formData,
@@ -256,7 +294,7 @@
                 processedStream.src = processedUrl;
 
                 // Recursively send and display processed frames
-                if(selectedModel==="CNN"){
+                if (selectedModel === "CNN") {
                   startSendingCNNFrames();
                 }
               });
@@ -266,6 +304,25 @@
         );
       }
 
+      const get_Yollo_predictions = async () => {
+        try {
+          const response = await fetch("/get_yollo_predictions");
+
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+
+          /** here you can call the chart function and pass the data.predictions 
+          as a parameter to get updated chart everytime you run, till you stopCamera */
+          //for CNN the lables are: lables  = ["Angry", "Disgusted", "Fearful", "Happy", "Neutral", "Sad", "Surprised"]
+          const data = await response.json();
+          if (data.predictions.length > 0) {
+            Yollo_predictions = data.predictions;
+          }
+        } catch (error) {
+          console.error("Error fetching predictions:", error);
+        }
+      };
 
       function startSendingYolloFrames() {
         const canvas = document.createElement("canvas");
@@ -274,7 +331,7 @@
         canvas.height = cameraStream.videoHeight;
 
         ctx.drawImage(cameraStream, 0, 0, canvas.width, canvas.height);
-
+        get_Yollo_predictions();
         canvas.toBlob(
           (blob) => {
             const formData = new FormData();
@@ -290,15 +347,16 @@
                 processedStream.src = processedUrl;
 
                 // Recursively send and display processed frames
-                if(selectedModel==="Yollo"){
+                if (selectedModel === "Yollo") {
                   startSendingYolloFrames();
                 }
-               });
+              });
           },
           "image/jpeg",
           0.9
         );
       }
+      console.log("Data: ", CNN_predictions);
 
       // function downloadAttendance() {
       //     fetch('/download_attendance')
