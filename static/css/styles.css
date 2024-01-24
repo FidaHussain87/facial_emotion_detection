@@ -1,0 +1,214 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+  /* *******************************************  */
+
+.button-setup{
+    display: flex;
+    margin: 10px;
+    padding:10px;
+    background-color: #f2f2f2;
+    gap: 10px;
+    justify-content: flex-start;
+    flex-direction: row;
+    align-items: start;
+    /* justify-content: center; */
+    /* height: 110vh; */
+}  
+
+/* h1 {
+    color: #ffa500; 
+    font-size: 30px;
+    justify-items: center;
+    align-items: center;
+  } */
+
+
+  .button {
+    padding: 20px;
+    border-radius: 22px;
+    color: white;
+    border-radius: 50px;
+    background-color: dodgerblue;
+    font-weight: bold;
+    font-size: 20px;
+    margin: 10px;
+    cursor: pointer;
+  }
+
+  .button:hover {
+    background-color: #ffa500;
+  }
+
+
+  
+  #modelSetup {
+    display: flex !important;
+    justify-content: center; /* Horizontally center the content */
+    align-items: center; /* Vertically center the content */
+    height: 80px; /* Example height, adjust as needed */
+    text-align: center; /* Ensure that the text within is centered as well */
+}
+
+    /* To ensure the select box and label are inline and centered */
+    #modelSetup label, #modelSetup select {
+        margin: 0 5px; /* Add some spacing around the label and select box */
+    }
+
+
+    
+/*************************************************/
+
+#modelSetup label {
+    margin-right: 10px; /* Spacing to the right of the label */
+    font-size: 1.2rem; /* Larger font size for the label */
+}
+
+#modelSetup select {
+    padding: 10px 15px; /* Padding inside the select box */
+    margin: 0 5px; /* Spacing around the select box */
+    font-size: 1rem; /* Font size for select options */
+    border: 1px solid #ccc; /* A subtle border around the select */
+    border-radius: 5px; /* Rounded corners for the select */
+    -webkit-appearance: none; /* Remove default styling specific to WebKit browsers */
+    -moz-appearance: none; /* Remove default styling specific to Mozilla browsers */
+    appearance: none; /* Standard way to remove default arrow */
+    background-color: #f8f8f8; /* A light background for the select */
+    cursor: pointer; /* Cursor to indicate it's selectable */
+    outline: none; /* Remove the default focus outline */
+    width: 200px; /* Set a specific width */
+}
+
+/* Style focus state of select for better accessibility */
+#modelSetup select:focus {
+    /* border-color: #0066ff;  */
+}
+
+  /* *******************************************  */
+
+  .container {
+    margin-left: 100px;
+    display: grid;
+    grid-template-columns: 1fr 4fr 3fr; /* Two columns with equal width */
+    gap: 10px; /* Add space between video and processed frames */
+    background-color: #fff;
+    padding: 5px;
+    /* margin-top: 50px; */
+    border-radius: 80px;
+    box-shadow: 4 2px 4px rgba(0, 0, 0, 0.1);
+    /* width: 1500px; */
+    /* height: 200px; */
+  }
+
+
+  #cameraStream {
+    display: none;
+    margin-left: -60px;
+    width: 200px !important;
+    border-radius: 30px;
+  }
+
+  #processedStream {
+    display: none;
+    width: 800px;
+    border-radius: 30px;
+  }
+
+  /* Nav Bar */
+
+.navbar {
+    padding: 10px;
+    background-color: #333;
+    color: white;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-logo {
+    height: 40px; /* Adjust size as needed */
+    margin-right: 10px;
+}
+
+.navbar-title {
+    font-size: 1.5em;
+    color: #ffa500; /* Orange color */
+    
+}
+
+.navbar-links .nav-link {
+    margin-left: 20px;
+    color: white;
+    text-decoration: none;
+    font-size: 1em;
+}
+
+.navbar-links .nav-link:hover {
+    color: #ddd;
+}
+
+/* **********************Toast*********************** */
+#toastContainer {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.toast {
+    background-color: #e22424;
+    color: #fff;
+    padding: 10px 20px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    opacity: 0;
+    transition: opacity 0.5s, bottom 0.5s;
+    position: relative;
+    bottom: 0;
+    display: none;
+}
+
+/* ************************************************** */
+
+/* graphs and stats */
+
+#emotion_info {
+    margin-right: 5px;
+    display: flex;
+    flex-direction: column;
+    /* margin: 5px; */
+}
+
+#emotion_info h2 {
+    color: #ffa500; /* Example color for titles */
+    /* margin-bottom: 10px; */
+}
+#emotion_info2 h2{
+    color: #ffa500; /* Example color for titles */
+    /* margin-bottom: 10px; */
+}
+
+#emotion_info ul {
+    list-style-type: none; /* Remove default list styling */
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Create two columns */
+    gap: 10px; /* Add space between list items */
+}
+
+#emotion_info li {
+    background-color: #f2f2f2; /* Light grey background for list items */
+    padding: 1px;
+    /* margin-bottom: 5px; */
+    border-radius: 5px; /* Rounded corners for list items */
+}
