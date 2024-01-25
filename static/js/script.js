@@ -24,6 +24,15 @@ const stopCameraButton = document.getElementById("stopCameraButton");
 // const downloadAttendanceButton = document.getElementById('downloadAttendanceButton');
 const cameraStream = document.getElementById("cameraStream");
 const modelSelect = document.getElementById("modelSelect");
+
+
+
+const mySwitch = document.getElementById('generateReportSwitch');
+
+const main_container = document.getElementById("main_container");
+const placeholder = document.getElementById("placeholder-container");
+const switch_container = document.getElementById("switch_ui");
+
 //   const modelSetup = document.getElementById("modelSetup");
 
 const processedStream = document.getElementById("processedStream");
@@ -33,10 +42,15 @@ var CNN_predictions = [];
 var Chehra_predictions = [];
 var Yollo_predictions = [];
 
+
+var emotionChart;
+var values = [0, 0, 0, 0, 0, 0, 0, 0];
+
+
 function handleModelChange() {
   const selectedValue = modelSelect.value;
   if (cameraStream.srcObject != "") {
-    stopCamera();
+    stopCamera(false);
   }
   // Stop processing frames for the previous model
 
@@ -47,13 +61,19 @@ function handleModelChange() {
   if (selectedValue === "CNN") {
     console.log("CNN");
     selectedModel = "CNN";
+    labels=["Anger",'Contempt', 'Disgust',"Fear","Happiness","Neutrality","Sadness","Surprise"];
+    createChart(labels);
     openCamera();
   } else if (selectedValue === "Chehra") {
     console.log("Chehra");
     selectedModel = "Chehra";
+    labels = ["Anger","Fear","Happiness","Neutrality","Sadness","Surprise"];
+    createChart(labels);
     openCamera();
   } else if (selectedValue === "Yollo") {
     selectedModel = "Yollo";
+    labels=["Angry", "Disgusted", "Fearful","Happy", "Neutral","Sad","Surprised"];
+    createChart(labels);
     openCamera();
   } else {
     //show toast
@@ -63,12 +83,25 @@ function handleModelChange() {
 
 function openCamera() {
   cameraButton.style.display = "none";
+  placeholder.style.display="none";
   // modelSelect.style.display="none";
   // modelSetup.style.display="none";
 
   stopCameraButton.style.display = "block";
   cameraStream.style.display = "block";
   processedStream.style.display = "block";
+  main_container.style.display = "grid";
+  switch_container.style.display="none";
+
+
+
+  const isSwitchOn = mySwitch.checked;
+  if(isSwitchOn){
+    const sessionId = generateSessionId();
+    document.getElementById('sessionID').innerHTML=sessionId;
+  }
+
+  
 
   navigator.mediaDevices
     .getUserMedia({ video: true })
@@ -89,19 +122,31 @@ function openCamera() {
   // startSendingFrames();
 }
 
-function stopCamera() {
+function stopCamera(flag) {
+
   if (stream) {
     stream.getTracks().forEach((track) => track.stop());
+    if(flag){
+      modelSelect.value="";
+      selectedModel="";
+      mySwitch.checked = false;
+    }
   }
   stream = null;
 
   stopCameraButton.style.display = "none";
+  main_container.style.display = "none";
+
   cameraButton.style.display = "block";
+  placeholder.style.display="block";
+  switch_container.style.display="flex";
+
   // modelSelect.style.display="block";
   // modelSetup.style.display="flex !important";
 
   cameraStream.style.display = "none";
   processedStream.style.display = "none";
+
   cameraStream.srcObject = null;
   processedStream.src = ""; // Clear the processed image
 }
@@ -120,6 +165,8 @@ const get_chehra_predictions = async () => {
     //for chehra the lables are:  labels = ["anger","fear","happiness","neutrality","sadness","surprise"]
     if (data.predictions.length > 0) {
       Chehra_predictions = data.predictions;
+      //update Chart
+      updateChart(Chehra_predictions);
     }
   } catch (error) {
     console.error("Error fetching predictions:", error);
@@ -148,9 +195,6 @@ function startSendingChehraFrames() {
           const processedUrl = URL.createObjectURL(processedBlob);
           processedStream.src = processedUrl;
 
-          //update Chart
-          updateChart(null);
-
           // Recursively send and display processed frames
           if (selectedModel === "Chehra") {
             startSendingChehraFrames();
@@ -176,6 +220,9 @@ const get_CNN_predictions = async () => {
     const data = await response.json();
     if (data.predictions.length > 0) {
       CNN_predictions = data.predictions;
+      //update Chart
+      updateChart(CNN_predictions);
+
     }
   } catch (error) {
     console.error("Error fetching predictions:", error);
@@ -204,9 +251,6 @@ function startSendingCNNFrames() {
           const processedUrl = URL.createObjectURL(processedBlob);
           processedStream.src = processedUrl;
 
-          //update Chart
-          updateChart(null);
-
           // Recursively send and display processed frames
           if (selectedModel === "CNN") {
             startSendingCNNFrames();
@@ -232,6 +276,9 @@ const get_Yollo_predictions = async () => {
     const data = await response.json();
     if (data.predictions.length > 0) {
       Yollo_predictions = data.predictions;
+      //update Chart
+      updateChart(Yollo_predictions);
+
     }
   } catch (error) {
     console.error("Error fetching predictions:", error);
@@ -259,9 +306,6 @@ function startSendingYolloFrames() {
         .then((processedBlob) => {
           const processedUrl = URL.createObjectURL(processedBlob);
           processedStream.src = processedUrl;
-
-          //update Chart
-          updateChart(null);
 
           // Recursively send and display processed frames
           if (selectedModel === "Yollo") {
@@ -292,21 +336,14 @@ function startSendingYolloFrames() {
 
 /************************************************************ */
 /********************************************************* */
-var ctx = document.getElementById("emotionChart").getContext("2d");
 
-var labels = [
-  "Anger",
-  "Contempt",
-  "Disgust",
-  "Fear",
-  "Happiness",
-  "Neutrality",
-  "Sadness",
-  "Surprise",
-];
-var values = [0, 0, 0, 0, 0, 0, 0, 0];
+function createChart(labels){
+  var ctx = document.getElementById("emotionChart").getContext("2d");
+  if (emotionChart) {
+    emotionChart.destroy();
+}
 
-var emotionChart = new Chart(ctx, {
+emotionChart = new Chart(ctx, {
   type: "bar",
   data: {
     labels: labels,
@@ -347,22 +384,48 @@ var emotionChart = new Chart(ctx, {
     },
   },
 });
+}
 
-function updateChart(emotion_info) {
-  // console.log("emotion_info: ", emotion_info);
+function updateChart(predictions) {
+  console.log("predictions: ", predictions);
+  // debugger;
+
+   // Clear existing list items
+   var emotionList = document.getElementById("emotion_info").querySelector("ul");
+   emotionList.innerHTML = '';
+
+  console.log("len::"+labels.length);
   for (var i = 0; i < labels.length; i++) {
-    const randomNumber = getRandomNumber();
-    values[i] = randomNumber; //emotion_info[labels[i]];
+    if(selectedModel==="Yollo"){
+      if(predictions[i]!=null){
+        var value = predictions[i] * 100;
+        values[i] = value;
+        console.log(labels[i] + " " + values[i])
+  
+         // Create list item for each emotion
+         var listItem = document.createElement("li");
+         listItem.textContent = labels[i] + ": " + value.toFixed(2) + "%";
+         emotionList.appendChild(listItem);
+  
+      }
+    }else{
+      if(predictions[0][i]!=null){
+        var value = predictions[0][i] * 100;
+        values[i] = value;
+        console.log(labels[i] + " " + values[i])
+  
+         // Create list item for each emotion
+         var listItem = document.createElement("li");
+         listItem.textContent = labels[i] + ": " + value.toFixed(2) + "%";
+         emotionList.appendChild(listItem);
+  
+      }
+    }
+    
   }
   emotionChart.update();
 }
 
-function getRandomNumber() {
-  // Math.random() returns a random number between 0 (inclusive) and 1 (exclusive).
-  // Multiply by 100 to get a number between 0 and 100, then add 1 to shift to 1 and 101,
-  // ensuring you can get 1 as a result (since Math.floor() will round down).
-  return Math.floor(Math.random() * 100) + 1;
-}
 
 /**************************************************** */
 
@@ -381,7 +444,7 @@ function showToast(message) {
   setTimeout(() => {
     toast.style.display = "block";
     toast.style.opacity = 1;
-    toast.style.bottom = "20px"; // Raise the toast
+    // toast.style.bottom = "20px"; // Raise the toast
   }, 100); // Small timeout to allow for CSS transition
 
   // Hide and remove toast after 3 seconds
@@ -395,3 +458,12 @@ function showToast(message) {
     }, 500); // Matches the CSS transition
   }, 3000);
 }
+
+
+
+function generateSessionId() {
+  const timestamp = Date.now().toString(36); // Convert timestamp to base-36 for compactness
+  const randomString = Math.random().toString(36).substring(2, 15); // Generate a random string
+  return timestamp + '_' + randomString;
+}
+
