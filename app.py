@@ -21,6 +21,10 @@ from keras.models import load_model
 import mean_std_ofdata as ms
 
 
+import os
+import datetime
+
+
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, async_mode=None)
@@ -277,6 +281,41 @@ def get_yollo_predictions():
 
 
 
+
+#####################################################
+def create_folder_and_file(session_id, model_name, content):
+    # Create a timestamp
+    # timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+
+    session_id= "id_"+session_id
+    base_dir = "./sessions-data/"
+    folder_name = f"{session_id}_{timestamp}"
+    file_name = f"{model_name}_{timestamp}.txt"
+    
+    # Ensure base directory exists
+    os.makedirs(base_dir, exist_ok=True)
+
+    # Full path for the new folder
+    full_folder_path = os.path.join(base_dir, folder_name)
+
+    # Create the folder
+    os.makedirs(full_folder_path, exist_ok=True)
+
+    # Create and write to the file
+    file_path = os.path.join(full_folder_path, file_name)
+    with open(file_path, 'w') as file:
+        file.write(content)  # Replace with your actual content
+
+    return f"File {file_name} created in folder {folder_name}"
+
+# Flask route
+@app.route('/create_file/<session_id>/<model_name>', methods=['POST'])
+def create_file_route(session_id, model_name):
+    content = request.json.get('content', '')  # Get content from JSON
+    result = create_folder_and_file(session_id, model_name, content)
+    return result
+#####################################################    
 
 
 if __name__ == '__main__':

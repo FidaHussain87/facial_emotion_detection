@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /********************************************************* */
-
+let sessionId = '';
 const cameraButton = document.getElementById("cameraButton");
 const stopCameraButton = document.getElementById("stopCameraButton");
 // const downloadAttendanceButton = document.getElementById('downloadAttendanceButton');
@@ -43,8 +43,16 @@ var Chehra_predictions = [];
 var Yollo_predictions = [];
 
 
+let startTime='';
+let endTime='';
+
+let averages = [0,0,0,0,0,0,0,0]; 
+let frameCount=0;
+
 var emotionChart;
 var values = [0, 0, 0, 0, 0, 0, 0, 0];
+
+let isSwitchOn = false;
 
 
 function handleModelChange() {
@@ -93,11 +101,11 @@ function openCamera() {
   main_container.style.display = "grid";
   switch_container.style.display="none";
 
+   startTime = getCurrentTimestamp();
 
-
-  const isSwitchOn = mySwitch.checked;
+  isSwitchOn = mySwitch.checked;
   if(isSwitchOn){
-    const sessionId = generateSessionId();
+    sessionId = generateSessionId();
     document.getElementById('sessionID').innerHTML=sessionId;
   }
 
@@ -122,14 +130,86 @@ function openCamera() {
   // startSendingFrames();
 }
 
+
+const createFolderAndFile = async (sessionId, modelName, content) => {
+  try {
+    const response = await fetch(`/create_file/${sessionId}/${modelName}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ content })  // Send content in JSON format
+    });
+
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+
+    const result = await response.text();
+    console.log(result);
+  } catch (error) {
+    console.error('Error:', error);
+  }
+};
+
+
+
+function createSessionSummary(sessionId, startTime, endTime, selectedModel, labels, averages) {
+  // Calculate session time
+  const sessionStartTime = new Date(startTime);
+  const sessionEndTime = new Date(endTime);
+  const sessionDuration = (sessionEndTime - sessionStartTime) / 1000; // Duration in seconds
+
+  // Start building the summary string
+  let summary = `Session ID: ${sessionId}\n`;
+  summary += `Start Time: ${sessionStartTime.toISOString()}\n`;
+  summary += `End Time: ${sessionEndTime.toISOString()}\n`;
+  summary += `Session Time: ${sessionDuration} seconds\n`;
+  summary += `Selected Model: ${selectedModel}\n\n`;
+
+  summary += `Average Emotions(%):\n`;
+  // Append each label with its corresponding average value
+  labels.forEach((label, index) => {
+      summary += `${label}: ${averages[index]}\n`;
+  });
+
+  return summary;
+}
+
+
+function getCurrentTimestamp() {
+  return new Date().toISOString();
+}
+
 function stopCamera(flag) {
 
   if (stream) {
     stream.getTracks().forEach((track) => track.stop());
+
+
+    if(isSwitchOn){
+        // create file start
+        endTime = getCurrentTimestamp();
+        for (var i = 0; i < labels.length; i++) {
+          // averages[i] = averages[i]/frameCount;
+          averages[i] = parseFloat((averages[i] / frameCount).toFixed(2));
+        }
+
+        const sessionSummary = createSessionSummary(sessionId, startTime, endTime, selectedModel, labels, averages);
+        createFolderAndFile(sessionId,selectedModel, sessionSummary);
+
+        startTime='';
+        endTime='';
+        averages = [0,0,0,0,0,0,0,0]; 
+        frameCount=0;
+        // create file end
+    }
+
     if(flag){
       modelSelect.value="";
       selectedModel="";
       mySwitch.checked = false;
+      isSwitchOn = false;
     }
   }
   stream = null;
@@ -395,12 +475,15 @@ function updateChart(predictions) {
    emotionList.innerHTML = '';
 
   console.log("len::"+labels.length);
+  frameCount = frameCount+1;
   for (var i = 0; i < labels.length; i++) {
     if(selectedModel==="Yollo"){
       if(predictions[i]!=null){
         var value = predictions[i] * 100;
         values[i] = value;
         console.log(labels[i] + " " + values[i])
+        averages[i]=averages[i]+values[i];
+
   
          // Create list item for each emotion
          var listItem = document.createElement("li");
@@ -413,7 +496,8 @@ function updateChart(predictions) {
         var value = predictions[0][i] * 100;
         values[i] = value;
         console.log(labels[i] + " " + values[i])
-  
+        averages[i]=averages[i]+values[i];
+
          // Create list item for each emotion
          var listItem = document.createElement("li");
          listItem.textContent = labels[i] + ": " + value.toFixed(2) + "%";
