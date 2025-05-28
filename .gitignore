@@ -8,3 +8,4 @@ Scripts/
 Include/
 pyvenv.cfg
 __pycache__
+sessions-data/
